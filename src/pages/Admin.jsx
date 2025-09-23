@@ -141,6 +141,9 @@ const Admin = () => {
         description: safe(editingProductData?.description) || "",
       };
 
+      if (editingProductData?.image) {
+        payload.image = safe(editingProductData.image);
+      }
       if ("stock" in editingProductData) {
         const stock = Number(editingProductData.stock);
         if (Number.isNaN(stock) || stock < 0)
@@ -521,7 +524,7 @@ const Admin = () => {
                 image: "",
               });
               setFieldFormError("");
-              setFieldModalOpen(true); 
+              setFieldModalOpen(true);
             }}
           >
             ➕ Añadir cancha

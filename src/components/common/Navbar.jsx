@@ -57,7 +57,7 @@ function Menu() {
                 <NavLink
                   end
                   className="nav-link"
-                  to="/sobrenosotros"
+                  to="/sobre-nosotros"
                   onClick={closeMenu}
                 >
                   Sobre Nosotros
