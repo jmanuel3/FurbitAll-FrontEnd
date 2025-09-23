@@ -9,7 +9,6 @@ const ProductModal = ({
   saving,
   error,
 }) => {
-
   if (!productData) return null;
 
   return (
@@ -70,6 +69,18 @@ const ProductModal = ({
               value={productData.description || ""}
               onChange={onChange}
               disabled={saving}
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3" controlId="prodImage">
+            <Form.Label>Imagen (URL)</Form.Label>
+            <Form.Control
+              type="text"
+              name="image"
+              value={productData.image || ""}
+              onChange={onChange}
+              disabled={saving}
+              placeholder="https://ejemplo.com/imagen.jpg"
             />
           </Form.Group>
 
