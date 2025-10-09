@@ -19,8 +19,26 @@ const Register = () => {
         body: JSON.stringify({ name, email, password }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Error al registrar");
+      // Try to parse JSON when possible, otherwise fallback to text
+      let data;
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        try {
+          data = await res.json();
+        } catch (err) {
+          data = { message: "Respuesta inválida del servidor" };
+        }
+      } else {
+        const text = await res.text();
+        data = { message: text };
+      }
+
+      if (!res.ok) {
+        // Use server-provided message when available, otherwise include status
+        throw new Error(
+          data.message || `Error ${res.status}: ${res.statusText}`
+        );
+      }
 
       setMessage(
         "✅ Usuario registrado con éxito. Ahora podés iniciar sesión."
@@ -29,7 +47,22 @@ const Register = () => {
       setEmail("");
       setPassword("");
     } catch (error) {
-      setMessage(`❌ ${error.message}`);
+      const raw = error && error.message ? String(error.message) : "";
+      let friendly;
+      const lower = raw.toLowerCase();
+
+      if (lower.includes("failed to fetch") || error.name === "TypeError") {
+        friendly =
+          "No se pudo conectar con el servidor. Verifica tu conexión a internet o intenta más tarde.";
+      } else if (lower.includes("network")) {
+        friendly = "Error de red. Revisa tu conexión.";
+      } else if (raw) {
+        friendly = raw;
+      } else {
+        friendly = "Ocurrió un error inesperado. Intentelo nuevamente.";
+      }
+
+      setMessage(`❌ ${friendly}`);
     }
   };
 
