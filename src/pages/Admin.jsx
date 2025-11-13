@@ -101,16 +101,18 @@ const Admin = () => {
   };
 
   const openEditProduct = (p) => {
-    setEditingProductData({
-      _id: p._id,
-      name: p.name ?? "",
-      price: p.price ?? "",
-      description: p.description ?? "",
-      stock: p.stock ?? 0,
-    });
-    setProductFormError("");
-    setProductModalOpen(true);
-  };
+  setEditingProductData({
+    _id: p._id,
+    name: p.name ?? "",
+    price: p.price ?? "",
+    description: p.description ?? "",
+    stock: p.stock ?? 0,
+    image: p.image ?? "",
+    currentImage: null
+  });
+  setProductFormError("");
+  setProductModalOpen(true);
+};
 
   const closeProductModal = () => {
     if (savingProduct) return;
@@ -126,49 +128,48 @@ const Admin = () => {
   };
 
   const saveProduct = async () => {
-    try {
-      setProductFormError("");
-      const name = safe(editingProductData?.name);
-      const price = Number(editingProductData?.price);
+  try {
+    setProductFormError("");
+    const name = safe(editingProductData?.name);
+    const price = Number(editingProductData?.price);
 
-      if (!name) return setProductFormError("El nombre es obligatorio.");
-      if (Number.isNaN(price) || price < 0)
-        return setProductFormError("Precio inválido.");
+    if (!name) return setProductFormError("El nombre es obligatorio.");
+    if (Number.isNaN(price) || price < 0)
+      return setProductFormError("Precio inválido.");
 
-      const payload = {
-        name,
-        price,
-        description: safe(editingProductData?.description) || "",
-      };
+    // Mantener el payload como objeto JSON (sin FormData)
+    const payload = {
+      name,
+      price,
+      description: safe(editingProductData?.description) || "",
+      image: safe(editingProductData?.image) || "" // URL de la imagen
+    };
 
-      if (editingProductData?.image) {
-        payload.image = safe(editingProductData.image);
-      }
-      if ("stock" in editingProductData) {
-        const stock = Number(editingProductData.stock);
-        if (Number.isNaN(stock) || stock < 0)
-          return setProductFormError("Stock inválido.");
-        payload.stock = stock;
-      }
-
-      setSavingProduct(true);
-
-      if (editingProductData?._id) {
-        await updateProduct(token, editingProductData._id, payload);
-        setFeedback({ variant: "success", text: "Producto actualizado." });
-      } else {
-        await createProduct(token, payload);
-        setFeedback({ variant: "success", text: "Producto creado." });
-      }
-
-      const prodData = await getProducts();
-      setProducts(prodData);
-      closeProductModal();
-    } catch (e) {
-      setSavingProduct(false);
-      setProductFormError(e.message || "Error al guardar el producto");
+    if ("stock" in editingProductData) {
+      const stock = Number(editingProductData.stock);
+      if (Number.isNaN(stock) || stock < 0)
+        return setProductFormError("Stock inválido.");
+      payload.stock = stock;
     }
-  };
+
+    setSavingProduct(true);
+
+    if (editingProductData?._id) {
+      await updateProduct(token, editingProductData._id, payload);
+      setFeedback({ variant: "success", text: "Producto actualizado." });
+    } else {
+      await createProduct(token, payload);
+      setFeedback({ variant: "success", text: "Producto creado." });
+    }
+
+    const prodData = await getProducts();
+    setProducts(prodData);
+    closeProductModal();
+  } catch (e) {
+    setSavingProduct(false);
+    setProductFormError(e.message || "Error al guardar el producto");
+  }
+};
 
   const handleDeleteProduct = async (id) => {
     if (!window.confirm("¿Estás seguro de eliminar este producto?")) return;
@@ -453,6 +454,8 @@ const Admin = () => {
                 price: "",
                 description: "",
                 stock: 0,
+                image: "",
+                currentImage: null
               });
               setProductFormError("");
               setProductModalOpen(true);

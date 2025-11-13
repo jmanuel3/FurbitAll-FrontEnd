@@ -1,4 +1,4 @@
-import { Modal, Button, Form, Alert } from "react-bootstrap";
+import { Modal, Button, Form, Alert, Card } from "react-bootstrap";
 
 const ProductModal = ({
   show,
@@ -10,6 +10,10 @@ const ProductModal = ({
   error,
 }) => {
   if (!productData) return null;
+
+  const handleImageUrlChange = (e) => {
+    onChange(e); // Mantener el cambio normal para la URL
+  };
 
   return (
     <Modal
@@ -33,6 +37,47 @@ const ProductModal = ({
         )}
 
         <Form>
+          {/* Mostrar imagen actual si existe */}
+          {productData.currentImage && (
+            <Form.Group className="mb-3" controlId="prodCurrentImage">
+              <Form.Label>Imagen Actual</Form.Label>
+              <div>
+                <Card style={{ width: '150px', marginBottom: '10px' }}>
+                  <Card.Img 
+                    variant="top" 
+                    src={productData.currentImage} 
+                    alt="Imagen actual del producto"
+                    style={{ height: '100px', objectFit: 'cover' }}
+                  />
+                </Card>
+                <Form.Text className="text-muted">
+                  Esta es la imagen actual del producto
+                </Form.Text>
+              </div>
+            </Form.Group>
+          )}
+
+          {/* Campo para URL de imagen (manteniendo tu estructura actual) */}
+          <Form.Group className="mb-3" controlId="prodImage">
+            <Form.Label>
+              {productData.currentImage ? "Cambiar Imagen (URL)" : "Imagen del Producto (URL)"}
+            </Form.Label>
+            <Form.Control
+              type="text"
+              name="image"
+              value={productData.image || ""}
+              onChange={handleImageUrlChange}
+              disabled={saving}
+              placeholder="https://ejemplo.com/imagen.jpg"
+            />
+            <Form.Text className="text-muted">
+              {productData.currentImage 
+                ? "Ingresa una nueva URL para reemplazar la imagen actual" 
+                : "Ingresa la URL de la imagen del producto"
+              }
+            </Form.Text>
+          </Form.Group>
+
           <Form.Group className="mb-3" controlId="prodName">
             <Form.Label>Nombre *</Form.Label>
             <Form.Control
@@ -69,18 +114,6 @@ const ProductModal = ({
               value={productData.description || ""}
               onChange={onChange}
               disabled={saving}
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3" controlId="prodImage">
-            <Form.Label>Imagen (URL)</Form.Label>
-            <Form.Control
-              type="text"
-              name="image"
-              value={productData.image || ""}
-              onChange={onChange}
-              disabled={saving}
-              placeholder="https://ejemplo.com/imagen.jpg"
             />
           </Form.Group>
 

@@ -6,11 +6,51 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState({});
+
+  // ✅ Validaciones en el frontend
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validación de nombre
+    if (!name.trim()) {
+      newErrors.name = "El nombre es requerido";
+    } else if (name.trim().length < 2) {
+      newErrors.name = "El nombre debe tener al menos 2 caracteres";
+    }
+
+    // Validación de email
+    if (!email.trim()) {
+      newErrors.email = "El email es requerido";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "El formato del email es inválido";
+    }
+
+    // Validación de contraseña
+    if (!password) {
+      newErrors.password = "La contraseña es requerida";
+    } else if (password.length < 6) {
+      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setMessage("");
+    setErrors({});
+
+    // ✅ Validar antes de enviar
+    if (!validateForm()) {
+      setMessage("❌ Por favor, corrige los errores del formulario");
+      return;
+    }
+
     try {
+      console.log("🔄 Enviando datos:", { name, email, password });
+      
       const res = await fetch("http://localhost:4000/api/auth/register", {
         method: "POST",
         headers: {
@@ -19,47 +59,53 @@ const Register = () => {
         body: JSON.stringify({ name, email, password }),
       });
 
-      // Try to parse JSON when possible, otherwise fallback to text
+      console.log("📡 Respuesta del servidor - Status:", res.status);
+
       let data;
       const contentType = res.headers.get("content-type") || "";
+      
       if (contentType.includes("application/json")) {
         try {
           data = await res.json();
         } catch (err) {
+          console.error("❌ Error parseando JSON:", err);
           data = { message: "Respuesta inválida del servidor" };
         }
       } else {
         const text = await res.text();
+        console.log("📄 Respuesta en texto:", text);
         data = { message: text };
       }
 
       if (!res.ok) {
-        // Use server-provided message when available, otherwise include status
-        throw new Error(
-          data.message || `Error ${res.status}: ${res.statusText}`
-        );
+        // ✅ Manejar errores específicos del backend
+        if (res.status === 400) {
+          throw new Error(data.message || "Datos de registro inválidos");
+        } else if (res.status === 409) {
+          throw new Error(data.message || "El usuario ya existe");
+        } else {
+          throw new Error(data.message || `Error ${res.status}: ${res.statusText}`);
+        }
       }
 
-      setMessage(
-        "✅ Usuario registrado con éxito. Ahora podés iniciar sesión."
-      );
+      setMessage("✅ Usuario registrado con éxito. Ahora podés iniciar sesión.");
       setName("");
       setEmail("");
       setPassword("");
+      
     } catch (error) {
+      console.error("💥 Error completo:", error);
       const raw = error && error.message ? String(error.message) : "";
       let friendly;
-      const lower = raw.toLowerCase();
 
-      if (lower.includes("failed to fetch") || error.name === "TypeError") {
-        friendly =
-          "No se pudo conectar con el servidor. Verifica tu conexión a internet o intenta más tarde.";
-      } else if (lower.includes("network")) {
-        friendly = "Error de red. Revisa tu conexión.";
+      if (raw.includes("Failed to fetch") || error.name === "TypeError") {
+        friendly = "No se pudo conectar con el servidor. Verifica que el backend esté corriendo en el puerto 4000.";
+      } else if (raw.includes("network") || raw.includes("Network")) {
+        friendly = "Error de red. Revisa tu conexión y que el servidor esté activo.";
       } else if (raw) {
         friendly = raw;
       } else {
-        friendly = "Ocurrió un error inesperado. Intentelo nuevamente.";
+        friendly = "Ocurrió un error inesperado. Intentá nuevamente.";
       }
 
       setMessage(`❌ ${friendly}`);
@@ -87,9 +133,14 @@ const Register = () => {
                 placeholder="Tu nombre"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                isInvalid={!!errors.name}
                 required
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.name}
+              </Form.Control.Feedback>
             </Form.Group>
+
             <Form.Group className="mb-3">
               <Form.Label>Correo</Form.Label>
               <Form.Control
@@ -97,9 +148,14 @@ const Register = () => {
                 placeholder="Correo electrónico"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                isInvalid={!!errors.email}
                 required
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.email}
+              </Form.Control.Feedback>
             </Form.Group>
+
             <Form.Group className="mb-3">
               <Form.Label>Contraseña</Form.Label>
               <Form.Control
@@ -107,9 +163,14 @@ const Register = () => {
                 placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                isInvalid={!!errors.password}
                 required
               />
+              <Form.Control.Feedback type="invalid">
+                {errors.password}
+              </Form.Control.Feedback>
             </Form.Group>
+
             <Button type="submit" variant="success" className="w-100">
               Registrarse
             </Button>
