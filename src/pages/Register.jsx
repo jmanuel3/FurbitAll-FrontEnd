@@ -8,25 +8,21 @@ const Register = () => {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
 
-  // ✅ Validaciones en el frontend
   const validateForm = () => {
     const newErrors = {};
 
-    // Validación de nombre
     if (!name.trim()) {
       newErrors.name = "El nombre es requerido";
     } else if (name.trim().length < 2) {
       newErrors.name = "El nombre debe tener al menos 2 caracteres";
     }
 
-    // Validación de email
     if (!email.trim()) {
       newErrors.email = "El email es requerido";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "El formato del email es inválido";
     }
 
-    // Validación de contraseña
     if (!password) {
       newErrors.password = "La contraseña es requerida";
     } else if (password.length < 6) {
@@ -42,7 +38,6 @@ const Register = () => {
     setMessage("");
     setErrors({});
 
-    // ✅ Validar antes de enviar
     if (!validateForm()) {
       setMessage("❌ Por favor, corrige los errores del formulario");
       return;
@@ -51,7 +46,7 @@ const Register = () => {
     try {
       console.log("🔄 Enviando datos:", { name, email, password });
       
-      const res = await fetch("http://localhost:4000/api/auth/register", {
+      const res = await fetch("https://furbitall-backend.onrender.com/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -78,7 +73,7 @@ const Register = () => {
       }
 
       if (!res.ok) {
-        // ✅ Manejar errores específicos del backend
+        
         if (res.status === 400) {
           throw new Error(data.message || "Datos de registro inválidos");
         } else if (res.status === 409) {
