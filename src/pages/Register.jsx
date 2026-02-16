@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Container, Form, Button, Row, Col, Alert } from "react-bootstrap";
+import { Link } from "react-router-dom";
+import styles from "../styles/AuthForms.module.css";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -7,6 +8,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
@@ -39,140 +41,165 @@ const Register = () => {
     setErrors({});
 
     if (!validateForm()) {
-      setMessage("❌ Por favor, corrige los errores del formulario");
+      setMessage("Por favor, corrige los errores del formulario");
       return;
     }
 
-    try {
-      console.log("🔄 Enviando datos:", { name, email, password });
-      
-      const res = await fetch("https://furbitall-backend.onrender.com/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
+    setIsLoading(true);
 
-      console.log("📡 Respuesta del servidor - Status:", res.status);
+    try {
+      const res = await fetch(
+        "https://furbitall-backend.onrender.com/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, email, password }),
+        },
+      );
 
       let data;
       const contentType = res.headers.get("content-type") || "";
-      
+
       if (contentType.includes("application/json")) {
         try {
           data = await res.json();
         } catch (err) {
-          console.error("❌ Error parseando JSON:", err);
           data = { message: "Respuesta inválida del servidor" };
         }
       } else {
         const text = await res.text();
-        console.log("📄 Respuesta en texto:", text);
         data = { message: text };
       }
 
       if (!res.ok) {
-        
         if (res.status === 400) {
           throw new Error(data.message || "Datos de registro inválidos");
         } else if (res.status === 409) {
           throw new Error(data.message || "El usuario ya existe");
         } else {
-          throw new Error(data.message || `Error ${res.status}: ${res.statusText}`);
+          throw new Error(
+            data.message || `Error ${res.status}: ${res.statusText}`,
+          );
         }
       }
 
-      setMessage("✅ Usuario registrado con éxito. Ahora podés iniciar sesión.");
+      setMessage(
+        "success:Usuario registrado con éxito. Ahora puedes iniciar sesión.",
+      );
       setName("");
       setEmail("");
       setPassword("");
-      
     } catch (error) {
-      console.error("💥 Error completo:", error);
       const raw = error && error.message ? String(error.message) : "";
       let friendly;
 
       if (raw.includes("Failed to fetch") || error.name === "TypeError") {
-        friendly = "No se pudo conectar con el servidor. Verifica que el backend esté corriendo en el puerto 4000.";
+        friendly = "No se pudo conectar con el servidor.";
       } else if (raw.includes("network") || raw.includes("Network")) {
-        friendly = "Error de red. Revisa tu conexión y que el servidor esté activo.";
+        friendly = "Error de red. Revisa tu conexión.";
       } else if (raw) {
         friendly = raw;
       } else {
-        friendly = "Ocurrió un error inesperado. Intentá nuevamente.";
+        friendly = "Ocurrió un error inesperado.";
       }
 
-      setMessage(`❌ ${friendly}`);
+      setMessage(friendly);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const isSuccess = message.startsWith("success:");
+  const displayMessage = isSuccess ? message.replace("success:", "") : message;
+
   return (
-    <Container className="my-5">
-      <Row className="justify-content-center">
-        <Col md={4}>
-          <h2 className="mb-4 text-center">Registro</h2>
-          {message && (
-            <Alert variant={message.startsWith("✅") ? "success" : "danger"}>
-              {message}
-            </Alert>
-          )}
-          <Form
-            onSubmit={handleRegister}
-            className="p-4 border rounded shadow bg-light"
+    <div className={styles.authContainer}>
+      <div className={styles.authCard}>
+        <h2 className={styles.authTitle}>Crear cuenta</h2>
+        <p className={styles.authSubtitle}>Únete a FurbitAll</p>
+
+        {message && (
+          <div
+            className={`${styles.alert} ${isSuccess ? styles.alertSuccess : styles.alertError}`}
           >
-            <Form.Group className="mb-3">
-              <Form.Label>Nombre</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Tu nombre"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                isInvalid={!!errors.name}
-                required
-              />
-              <Form.Control.Feedback type="invalid">
-                {errors.name}
-              </Form.Control.Feedback>
-            </Form.Group>
+            {displayMessage}
+          </div>
+        )}
 
-            <Form.Group className="mb-3">
-              <Form.Label>Correo</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="Correo electrónico"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                isInvalid={!!errors.email}
-                required
-              />
-              <Form.Control.Feedback type="invalid">
-                {errors.email}
-              </Form.Control.Feedback>
-            </Form.Group>
+        <form onSubmit={handleRegister} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label htmlFor="name" className={styles.label}>
+              Nombre completo
+            </label>
+            <input
+              id="name"
+              type="text"
+              placeholder="Tu nombre"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={`${styles.input} ${errors.name ? styles.error : ""}`}
+              required
+            />
+            {errors.name && (
+              <span className={styles.errorMessage}>{errors.name}</span>
+            )}
+          </div>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Contraseña</Form.Label>
-              <Form.Control
-                type="password"
-                placeholder="Contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                isInvalid={!!errors.password}
-                required
-              />
-              <Form.Control.Feedback type="invalid">
-                {errors.password}
-              </Form.Control.Feedback>
-            </Form.Group>
+          <div className={styles.formGroup}>
+            <label htmlFor="email" className={styles.label}>
+              Correo electrónico
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`${styles.input} ${errors.email ? styles.error : ""}`}
+              required
+            />
+            {errors.email && (
+              <span className={styles.errorMessage}>{errors.email}</span>
+            )}
+          </div>
 
-            <Button type="submit" variant="success" className="w-100">
-              Registrarse
-            </Button>
-          </Form>
-        </Col>
-      </Row>
-    </Container>
+          <div className={styles.formGroup}>
+            <label htmlFor="password" className={styles.label}>
+              Contraseña
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`${styles.input} ${errors.password ? styles.error : ""}`}
+              required
+            />
+            {errors.password && (
+              <span className={styles.errorMessage}>{errors.password}</span>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className={styles.submitButton}
+            disabled={isLoading}
+          >
+            {isLoading ? "Registrando..." : "Crear cuenta"}
+          </button>
+        </form>
+
+        <div className={styles.footer}>
+          ¿Ya tienes cuenta?{" "}
+          <Link to="/login" className={styles.footerLink}>
+            Inicia sesión
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 };
 

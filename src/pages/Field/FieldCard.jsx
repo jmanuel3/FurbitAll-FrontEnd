@@ -1,43 +1,38 @@
-
-import Card from "react-bootstrap/Card";
-import Button from "react-bootstrap/Button";
 import { Link } from "react-router-dom";
+import styles from "./FieldCard.module.css";
 
 const FieldCard = ({ _id, name, location, image }) => {
   return (
-    <Card className="shadow-sm h-100">
-      {image ? (
-        <Card.Img
-          variant="top"
-          src={image}
-          alt={name}
-          style={{ height: 160, objectFit: "cover" }}
-        />
-      ) : (
-        <section
-          className="d-flex align-items-center justify-content-center bg-light"
-          style={{ height: 160 }}
+    <article className={styles.fieldCard}>
+      <div className={styles.imageWrapper}>
+        {image ? (
+          <img
+            src={image}
+            alt={name}
+            className={styles.fieldImage}
+            loading="lazy"
+          />
+        ) : (
+          <div className={styles.iconOverlay}>⚽</div>
+        )}
+      </div>
+
+      <div className={styles.cardBody}>
+        <h3 className={styles.fieldName}>{name}</h3>
+        <p className={styles.fieldLocation}>
+          <span>📍</span>
+          {location}
+        </p>
+
+        <Link
+          to="/reservas"
+          state={{ fieldId: _id }}
+          className={styles.reserveButton}
         >
-          <span className="text-muted">Sin imagen</span>
-        </section>
-      )}
-
-      <Card.Body className="d-flex flex-column">
-        <Card.Title className="mb-1">{name}</Card.Title>
-        <Card.Text className="text-muted mb-3">{location}</Card.Text>
-
-        <section className="mt-auto">
-          <Button
-            as={Link}
-            to={`/reservas?field=${_id}`} 
-            variant="success"
-            className="w-100"
-          >
-            Reservar
-          </Button>
-        </section>
-      </Card.Body>
-    </Card>
+          Reservar ahora
+        </Link>
+      </div>
+    </article>
   );
 };
 

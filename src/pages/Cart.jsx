@@ -1,18 +1,8 @@
 import { useState } from "react";
 import { useCart } from "../context/CartContext";
-import {
-  Container,
-  Row,
-  Col,
-  Table,
-  Button,
-  Alert,
-  Image,
-  Modal,
-  Form,
-} from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { decrementStockBulk } from "../services/productService";
+import styles from "./Cart.module.css";
 
 const currency = (n) =>
   new Intl.NumberFormat("es-AR", {
@@ -36,13 +26,17 @@ const Cart = () => {
   });
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState("");
-  const [apiShortages, setApiShortages] = useState(null); 
 
   const openCheckout = () => {
     if (!cart.length) return;
     setShowCheckout(true);
   };
-  const closeCheckout = () => setShowCheckout(false);
+
+  const closeCheckout = () => {
+    setShowCheckout(false);
+    setErrors({});
+    setApiError("");
+  };
 
   const validate = () => {
     const e = {};
@@ -59,13 +53,11 @@ const Cart = () => {
     if (status === 401) return "Tu sesión ha expirado. Inicia sesión de nuevo.";
     if (status === 409) {
       const list = payload?.shortages?.map(
-        (s) => `• ${s.name} (pediste ${s.requested}, hay ${s.available})`
+        (s) => `• ${s.name} (pediste ${s.requested}, hay ${s.available})`,
       );
       return list?.length
-        ? `Stock insuficiente:\n${list.join(
-            "\n"
-          )}\n\nAjusta cantidades y reintenta.`
-        : "Stock insuficiente en uno o más productos. Ajusta cantidades y reintenta.";
+        ? `Stock insuficiente:\n${list.join("\n")}\n\nAjusta cantidades y reintenta.`
+        : "Stock insuficiente en uno o más productos.";
     }
     if (status === 400)
       return payload?.message || "Petición inválida. Revisa el carrito.";
@@ -78,11 +70,10 @@ const Cart = () => {
 
     setSubmitting(true);
     setApiError("");
-    setApiShortages(null);
 
     try {
       const items = cart.map((it) => ({
-        productId: it._id || it.id, 
+        productId: it._id || it.id,
         qty: it.qty,
       }));
 
@@ -93,7 +84,6 @@ const Cart = () => {
 
       await decrementStockBulk(items, token);
 
-    
       const order = {
         id: `FA-${Date.now().toString().slice(-6)}`,
         items: cart.map(({ id, _id, name, qty, price }) => ({
@@ -109,7 +99,6 @@ const Cart = () => {
 
       try {
         localStorage.setItem("furbitAll_last_order", JSON.stringify(order));
-    
         localStorage.setItem("productsRefetchAt", String(Date.now()));
       } catch {}
 
@@ -119,287 +108,278 @@ const Cart = () => {
     } catch (err) {
       const msg = explainError(err?.status, err?.payload);
       setApiError(msg);
-      setApiShortages(err?.payload?.shortages ?? null);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <Container as="main" className="py-4" role="main">
-      <header>
-        <Row className="mb-3">
-          <Col as="h2">🛒 Carrito</Col>
-        </Row>
+    <main className={styles.cartContainer}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>🛒 Mi Carrito</h1>
       </header>
 
       {cart.length === 0 ? (
-        <Alert as="section" variant="info" aria-live="polite">
-          Tu carrito está vacío.{" "}
-          <Link to="/" className="alert-link">
+        <div className={styles.emptyCart}>
+          <p className={styles.emptyCartText}>Tu carrito está vacío</p>
+          <Link to="/" className={styles.emptyCartLink}>
             Ir a la tienda
           </Link>
-        </Alert>
+        </div>
       ) : (
         <>
-          <section aria-labelledby="resumen-carrito">
-            <h3 id="resumen-carrito" className="visually-hidden">
-              Resumen del carrito
-            </h3>
-
-            <Table responsive bordered hover className="align-middle">
+          <div className={styles.cartTable}>
+            <table className={styles.table}>
               <thead>
                 <tr>
                   <th>Producto</th>
-                  <th style={{ width: 110 }}>Cantidad</th>
-                  <th style={{ width: 130 }}>Precio</th>
-                  <th style={{ width: 130 }}>Subtotal</th>
-                  <th style={{ width: 120 }}>Acciones</th>
+                  <th style={{ width: "140px" }}>Cantidad</th>
+                  <th style={{ width: "120px" }}>Precio</th>
+                  <th style={{ width: "120px" }}>Subtotal</th>
+                  <th style={{ width: "100px" }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {cart.map((item) => (
-                  <tr key={item.id}>
+                  <tr key={item.id || item._id}>
                     <td>
-                      <article className="d-flex align-items-center gap-3 mb-0">
-                        {item.image ? (
-                          <figure className="mb-0">
-                            <Image
-                              src={item.image}
-                              alt={item.name}
-                              rounded
-                              style={{
-                                width: 60,
-                                height: 60,
-                                objectFit: "cover",
-                              }}
-                            />
-                          </figure>
-                        ) : null}
-
-                        <section aria-label={`Detalle de ${item.name}`}>
-                          <p className="fw-semibold mb-0">{item.name}</p>
-                      
-                        </section>
-                      </article>
+                      <div className={styles.productInfo}>
+                        {item.image && (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className={styles.productImage}
+                          />
+                        )}
+                        <p className={styles.productName}>{item.name}</p>
+                      </div>
                     </td>
-
                     <td>
-                      <nav aria-label={`Cambiar cantidad de ${item.name}`}>
-                        <ul className="d-flex align-items-center gap-2 list-unstyled mb-0">
-                          <li>
-                            <Button
-                              variant="outline-secondary"
-                              size="sm"
-                              onClick={() => updateQty(item.id, item.qty - 1)}
-                              aria-label={`Disminuir cantidad de ${item.name}`}
-                            >
-                              −
-                            </Button>
-                          </li>
-                          <li aria-live="polite" aria-atomic="true">
-                            <span className="px-2">{item.qty}</span>
-                          </li>
-                          <li>
-                            <Button
-                              variant="outline-secondary"
-                              size="sm"
-                              onClick={() => updateQty(item.id, item.qty + 1)}
-                              aria-label={`Aumentar cantidad de ${item.name}`}
-                            >
-                              +
-                            </Button>
-                          </li>
-                        </ul>
-                      </nav>
+                      <div className={styles.quantityControl}>
+                        <button
+                          className={styles.quantityButton}
+                          onClick={() => updateQty(item.id, item.qty - 1)}
+                          aria-label={`Disminuir cantidad de ${item.name}`}
+                        >
+                          −
+                        </button>
+                        <span className={styles.quantityDisplay}>
+                          {item.qty}
+                        </span>
+                        <button
+                          className={styles.quantityButton}
+                          onClick={() => updateQty(item.id, item.qty + 1)}
+                          aria-label={`Aumentar cantidad de ${item.name}`}
+                        >
+                          +
+                        </button>
+                      </div>
                     </td>
-
-                    <td>{currency(item.price)}</td>
-                    <td>{currency(item.price * item.qty)}</td>
-
+                    <td className={styles.price}>{currency(item.price)}</td>
+                    <td className={styles.price}>
+                      {currency(item.price * item.qty)}
+                    </td>
                     <td>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
+                      <button
+                        className={styles.removeButton}
                         onClick={() => removeFromCart(item.id)}
-                        aria-label={`Eliminar ${item.name} del carrito`}
+                        aria-label={`Eliminar ${item.name}`}
                       >
                         Eliminar
-                      </Button>
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
-
-              <tfoot>
+              <tfoot className={styles.tableFoot}>
                 <tr>
-                  <td colSpan={3} className="text-end fw-semibold">
+                  <td colSpan={3} className={styles.totalLabel}>
                     Total
                   </td>
-                  <td className="fw-bold">{currency(cartTotal)}</td>
-                  <td />
+                  <td className={styles.totalAmount}>{currency(cartTotal)}</td>
+                  <td></td>
                 </tr>
               </tfoot>
-            </Table>
+            </table>
+          </div>
 
-            <section
-              className="d-flex gap-2 justify-content-end"
-              aria-label="Acciones del carrito"
+          <div className={styles.cartActions}>
+            <button className={styles.clearButton} onClick={clearCart}>
+              Vaciar carrito
+            </button>
+            <button
+              className={styles.checkoutButton}
+              onClick={openCheckout}
+              disabled={!cart.length}
             >
-              <Button variant="outline-secondary" onClick={clearCart}>
-                Vaciar carrito
-              </Button>
-              <Button
-                variant="success"
-                onClick={openCheckout}
-                disabled={!cart.length}
-              >
-                Finalizar compra
-              </Button>
-            </section>
-          </section>
+              Finalizar compra
+            </button>
+          </div>
         </>
       )}
 
-      <Modal
-        show={showCheckout}
-        onHide={closeCheckout}
-        centered
-        aria-labelledby="modal-checkout-title"
-      >
-        <Modal.Header closeButton as="header">
-          <Modal.Title as="h5" id="modal-checkout-title">
-            Finalizar compra
-          </Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body as="section" aria-labelledby="resumen-pedido">
-    
-          {apiError && (
-            <Alert
-              variant="danger"
-              className="mb-3"
-              role="alert"
-              aria-live="assertive"
-            >
-              <pre className="mb-0" style={{ whiteSpace: "pre-wrap" }}>
-                {apiError}
-              </pre>
-            </Alert>
-          )}
-
-          <h6 id="resumen-pedido" className="mb-3">
-            Resumen
-          </h6>
-
-          <section aria-live="polite" className="mb-3">
-            {cart.map((i) => (
-              <p
-                key={i.id}
-                className="d-flex justify-content-between small mb-1"
+      {/* Checkout Modal */}
+      {showCheckout && (
+        <div className={styles.modalOverlay} onClick={closeCheckout}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <header className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Finalizar compra</h2>
+              <button
+                className={styles.closeButton}
+                onClick={closeCheckout}
+                aria-label="Cerrar"
               >
-                <span>
-                  {i.name} × {i.qty}
-                </span>
-                <span>{currency(i.price * i.qty)}</span>
-              </p>
-            ))}
-            <p className="d-flex justify-content-between mt-2 fw-semibold mb-0">
-              <span>Total</span>
-              <span>{currency(cartTotal)}</span>
-            </p>
-          </section>
+                ×
+              </button>
+            </header>
 
-          <h6 className="mb-2">Datos del comprador</h6>
-          <Form as="form" noValidate>
-            <Form.Group as="section" className="mb-2" controlId="ckNombre">
-              <Form.Label>Nombre y apellido</Form.Label>
-              <Form.Control
-                value={form.nombre}
-                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-                isInvalid={!!errors.nombre}
-                placeholder="Ej: Juan Pérez"
-              />
-              <Form.Control.Feedback type="invalid">
-                {errors.nombre}
-              </Form.Control.Feedback>
-            </Form.Group>
+            <div className={styles.modalBody}>
+              {apiError && (
+                <div className={`${styles.alert} ${styles.alertDanger}`}>
+                  <pre style={{ whiteSpace: "pre-wrap", margin: 0 }}>
+                    {apiError}
+                  </pre>
+                </div>
+              )}
 
-            <Form.Group as="section" className="mb-2" controlId="ckEmail">
-              <Form.Label>Email</Form.Label>
-              <Form.Control
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                isInvalid={!!errors.email}
-                placeholder="nombre@correo.com"
-              />
-              <Form.Control.Feedback type="invalid">
-                {errors.email}
-              </Form.Control.Feedback>
-            </Form.Group>
+              <h3 className={styles.sectionTitle}>Resumen del pedido</h3>
+              <div style={{ marginBottom: "1.5rem" }}>
+                {cart.map((i) => (
+                  <div key={i.id} className={styles.summaryItem}>
+                    <span>
+                      {i.name} × {i.qty}
+                    </span>
+                    <span>{currency(i.price * i.qty)}</span>
+                  </div>
+                ))}
+                <div className={styles.summaryTotal}>
+                  <span>Total</span>
+                  <span>{currency(cartTotal)}</span>
+                </div>
+              </div>
 
-            <Form.Group as="section" className="mb-2" controlId="ckTelefono">
-              <Form.Label>Teléfono</Form.Label>
-              <Form.Control
-                value={form.telefono}
-                onChange={(e) => setForm({ ...form, telefono: e.target.value })}
-                isInvalid={!!errors.telefono}
-                placeholder="+54 9 11 1234-5678"
-              />
-              <Form.Control.Feedback type="invalid">
-                {errors.telefono}
-              </Form.Control.Feedback>
-            </Form.Group>
+              <h3 className={styles.sectionTitle}>Datos del comprador</h3>
+              <form>
+                <div className={styles.formGroup}>
+                  <label htmlFor="nombre" className={styles.label}>
+                    Nombre y apellido
+                  </label>
+                  <input
+                    id="nombre"
+                    type="text"
+                    value={form.nombre}
+                    onChange={(e) =>
+                      setForm({ ...form, nombre: e.target.value })
+                    }
+                    className={`${styles.input} ${
+                      errors.nombre ? styles.error : ""
+                    }`}
+                    placeholder="Ej: Juan Pérez"
+                  />
+                  {errors.nombre && (
+                    <p className={styles.errorText}>{errors.nombre}</p>
+                  )}
+                </div>
 
-            <Form.Group as="section" className="mb-3" controlId="ckMetodo">
-              <Form.Label>Método de pago</Form.Label>
-              <Form.Select
-                value={form.metodo}
-                onChange={(e) => setForm({ ...form, metodo: e.target.value })}
-                aria-label="Seleccionar método de pago"
+                <div className={styles.formGroup}>
+                  <label htmlFor="email" className={styles.label}>
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
+                    className={`${styles.input} ${
+                      errors.email ? styles.error : ""
+                    }`}
+                    placeholder="nombre@correo.com"
+                  />
+                  {errors.email && (
+                    <p className={styles.errorText}>{errors.email}</p>
+                  )}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="telefono" className={styles.label}>
+                    Teléfono
+                  </label>
+                  <input
+                    id="telefono"
+                    type="tel"
+                    value={form.telefono}
+                    onChange={(e) =>
+                      setForm({ ...form, telefono: e.target.value })
+                    }
+                    className={`${styles.input} ${
+                      errors.telefono ? styles.error : ""
+                    }`}
+                    placeholder="+54 9 11 1234-5678"
+                  />
+                  {errors.telefono && (
+                    <p className={styles.errorText}>{errors.telefono}</p>
+                  )}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="metodo" className={styles.label}>
+                    Método de pago
+                  </label>
+                  <select
+                    id="metodo"
+                    value={form.metodo}
+                    onChange={(e) =>
+                      setForm({ ...form, metodo: e.target.value })
+                    }
+                    className={styles.select}
+                  >
+                    <option value="efectivo">Efectivo</option>
+                    <option value="tarjeta">Tarjeta</option>
+                    <option value="transferencia">Transferencia</option>
+                  </select>
+                </div>
+
+                <div className={styles.checkbox}>
+                  <input
+                    id="acepta"
+                    type="checkbox"
+                    checked={form.acepta}
+                    onChange={(e) =>
+                      setForm({ ...form, acepta: e.target.checked })
+                    }
+                  />
+                  <label htmlFor="acepta" className={styles.checkboxLabel}>
+                    Acepto términos y condiciones
+                  </label>
+                </div>
+                {errors.acepta && (
+                  <p className={styles.errorText}>{errors.acepta}</p>
+                )}
+              </form>
+            </div>
+
+            <footer className={styles.modalFooter}>
+              <button
+                className={styles.cancelButton}
+                onClick={closeCheckout}
+                disabled={submitting}
               >
-                <option value="efectivo">Efectivo</option>
-                <option value="tarjeta">Tarjeta</option>
-                <option value="transferencia">Transferencia</option>
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Check
-              id="ckTyC"
-              type="checkbox"
-              label="Acepto términos y condiciones"
-              checked={form.acepta}
-              isInvalid={!!errors.acepta}
-              onChange={(e) => setForm({ ...form, acepta: e.target.checked })}
-            />
-            {errors.acepta && (
-              <p className="text-danger small mt-1 mb-0" role="alert">
-                {errors.acepta}
-              </p>
-            )}
-          </Form>
-        </Modal.Body>
-
-        <Modal.Footer as="footer">
-          <Button
-            variant="outline-secondary"
-            onClick={closeCheckout}
-            disabled={submitting}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="success"
-            onClick={handleConfirmarCompra}
-            disabled={submitting}
-            aria-busy={submitting}
-          >
-            {submitting ? "Procesando..." : "Confirmar compra"}
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </Container>
+                Cancelar
+              </button>
+              <button
+                className={styles.confirmButton}
+                onClick={handleConfirmarCompra}
+                disabled={submitting}
+              >
+                {submitting ? "Procesando..." : "Confirmar compra"}
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
+    </main>
   );
 };
 

@@ -1,71 +1,46 @@
+import { Link } from "react-router-dom";
+import styles from "./ProductCard.module.css";
 
-import Card from "react-bootstrap/Card";
-import Button from "react-bootstrap/Button";
-import Badge from "react-bootstrap/Badge";
+const ProductCard = ({ _id, name, price, image, description, stock, onAdd }) => {
+  const getStockStatus = () => {
+    if (stock === 0) return { label: "Sin stock", className: styles.stockOut };
+    if (stock <= 5) return { label: `Quedan ${stock}`, className: styles.stockLow };
+    return { label: "Disponible", className: styles.stockAvailable };
+  };
 
-const currency = (n) =>
-  new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    minimumFractionDigits: 0,
-  }).format(n ?? 0);
-
-const ProductCard = ({ name, price, image, description, stock, onAdd }) => {
-  const agotado = typeof stock === "number" && stock <= 0;
+  const stockStatus = getStockStatus();
 
   return (
-    <Card className="shadow-sm card-hover h-100" as="article" aria-label={name}>
-      {image && (
-        <div className="ratio ratio-4x3 overflow-hidden rounded-top">
-          <Card.Img
-            src={image}
-            alt={name}
-            className="object-cover"
-            loading="lazy"
-          />
-        </div>
-      )}
+    <article className={styles.productCard}>
+      <Link to={`/productos/${_id}`} className={styles.imageWrapper}>
+        <img
+          src={image}
+          alt={name}
+          className={styles.productImage}
+          loading="lazy"
+        />
+        <span className={`${styles.stockBadge} ${stockStatus.className}`}>
+          {stockStatus.label}
+        </span>
+      </Link>
 
-      <Card.Body as="section" className="d-flex flex-column">
-        <div className="d-flex align-items-start justify-content-between gap-2 mb-1">
-          <Card.Title as="h3" className="h6 mb-0">
-            {name}
-          </Card.Title>
-          {typeof stock === "number" && (
-            <Badge
-              bg={agotado ? "secondary" : "success"}
-              aria-label={`Stock ${stock}`}
-            >
-              {agotado ? "Sin stock" : `Stock: ${stock}`}
-            </Badge>
-          )}
-        </div>
+      <div className={styles.cardBody}>
+        <h3 className={styles.productName}>{name}</h3>
+        <p className={styles.productDescription}>{description}</p>
 
-        {description && (
-          <Card.Text className="text-muted small mb-2" aria-label="Descripción">
-            {description.length > 100
-              ? `${description.slice(0, 100)}…`
-              : description}
-          </Card.Text>
-        )}
-
-        <div className="mt-auto d-flex align-items-center justify-content-between">
-          <span className="fw-bold">{currency(price)}</span>
-          <Button
-            variant={agotado ? "outline-secondary" : "success"}
-            size="sm"
-            disabled={agotado}
+        <div className={styles.cardFooter}>
+          <span className={styles.price}>${price}</span>
+          <button
             onClick={onAdd}
-            aria-disabled={agotado}
-            aria-label={
-              agotado ? `${name} agotado` : `Agregar ${name} al carrito`
-            }
+            disabled={stock === 0}
+            className={styles.addButton}
+            aria-label={`Agregar ${name} al carrito`}
           >
-            {agotado ? "Agotado" : "Comprar"}
-          </Button>
+            {stock === 0 ? "Agotado" : "Agregar"}
+          </button>
         </div>
-      </Card.Body>
-    </Card>
+      </div>
+    </article>
   );
 };
 
