@@ -1,0 +1,205 @@
+/* Modern Thank You Page */
+
+.thankYouPage {
+  padding: 3rem 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+  min-height: calc(100vh - 200px);
+}
+
+.card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+.orderId {
+  font-size: 1.125rem;
+  color: #718096;
+  margin-bottom: 0;
+}
+
+.orderIdNumber {
+  color: #48bb78;
+  font-weight: 700;
+}
+
+.section {
+  margin-bottom: 2.5rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 1.25rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.table thead {
+  background: #f7fafc;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.table th {
+  padding: 0.875rem;
+  text-align: left;
+  font-weight: 700;
+  color: #4a5568;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  padding: 1rem 0.875rem;
+  border-bottom: 1px solid #f0f0f0;
+  color: #2d3748;
+}
+
+.table tfoot {
+  background: #f7fafc;
+  border-top: 2px solid #e2e8f0;
+}
+
+.totalLabel {
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.totalAmount {
+  font-weight: 800;
+  color: #48bb78;
+  font-size: 1.25rem;
+}
+
+.customerInfo {
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 1rem;
+}
+
+.infoRow {
+  margin-bottom: 0.75rem;
+  color: #4a5568;
+  font-size: 0.95rem;
+}
+
+.infoRow:last-child {
+  margin-bottom: 0;
+}
+
+.infoLabel {
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+  display: inline-block;
+}
+
+.btnPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+  color: white;
+}
+
+.btnSecondary {
+  padding: 0.875rem 2rem;
+  background: white;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.btnSecondary:hover {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+.emptyState {
+  background: #e6fffa;
+  border: 2px solid #81e6d9;
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.emptyText {
+  color: #234e52;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .thankYouPage {
+    padding: 2rem 1rem;
+  }
+
+  .card {
+    padding: 2rem 1.5rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .table {
+    font-size: 0.875rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .btnPrimary,
+  .btnSecondary {
+    width: 100%;
+    text-align: center;
+  }
+}

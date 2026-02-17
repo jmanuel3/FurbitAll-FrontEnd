@@ -2,16 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getProductById } from "../../services/productService";
 import { useCart } from "../../context/CartContext";
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Button,
-  Alert,
-  Breadcrumb,
-  Badge,
-} from "react-bootstrap";
+import styles from "./ProductDetail.module.css";
 
 const currency = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -36,7 +27,6 @@ const ProductDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-
   useEffect(() => {
     if (product?.name) {
       const prev = document.title;
@@ -44,7 +34,6 @@ const ProductDetail = () => {
       return () => (document.title = prev);
     }
   }, [product?.name]);
-
 
   useEffect(() => {
     let ignore = false;
@@ -71,45 +60,53 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <Container as="main" className="my-5" role="main" aria-busy="true">
-        <div className="ad-slide skeleton rounded-4" />
-      </Container>
+      <main className={styles.detailPage}>
+        <div className={styles.loading}>
+          <div className={styles.skeleton} />
+        </div>
+      </main>
     );
   }
 
   if (error) {
     return (
-      <Container as="main" className="my-5" role="main">
-        <Alert as="section" variant="danger" className="mb-3" role="alert">
-          {error}
-        </Alert>
-        <nav className="d-flex gap-2" aria-label="Acciones de error">
-          <Button as={Link} to="/" variant="secondary">
-            Volver al inicio
-          </Button>
-          <Button variant="outline-secondary" onClick={() => navigate(-1)}>
-            Volver atrás
-          </Button>
-        </nav>
-      </Container>
+      <main className={styles.detailPage}>
+        <div className={styles.errorState}>
+          <p className={styles.errorText}>{error}</p>
+          <div className={styles.actions}>
+            <Link to="/" className={styles.addButton}>
+              Volver al inicio
+            </Link>
+            <button
+              className={styles.returnButton}
+              onClick={() => navigate(-1)}
+            >
+              Volver atrás
+            </button>
+          </div>
+        </div>
+      </main>
     );
   }
 
   if (!product) {
     return (
-      <Container as="main" className="my-5" role="main">
-        <Alert as="section" variant="warning" role="alert">
-          Producto no encontrado.
-        </Alert>
-        <nav className="d-flex gap-2" aria-label="Acciones de no encontrado">
-          <Button as={Link} to="/" variant="secondary">
-            Volver al inicio
-          </Button>
-          <Button variant="outline-secondary" onClick={() => navigate(-1)}>
-            Volver atrás
-          </Button>
-        </nav>
-      </Container>
+      <main className={styles.detailPage}>
+        <div className={styles.notFound}>
+          <p className={styles.errorText}>Producto no encontrado.</p>
+          <div className={styles.actions}>
+            <Link to="/" className={styles.addButton}>
+              Volver al inicio
+            </Link>
+            <button
+              className={styles.returnButton}
+              onClick={() => navigate(-1)}
+            >
+              Volver atrás
+            </button>
+          </div>
+        </div>
+      </main>
     );
   }
 
@@ -118,113 +115,89 @@ const ProductDetail = () => {
   const sinStock = stockNum <= 0;
 
   return (
-    <Container as="main" className="my-4" role="main">
-      <header className="d-flex align-items-center justify-content-between">
-        <Breadcrumb className="mb-3" aria-label="breadcrumb">
-          <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/" }}>
-            Home
-          </Breadcrumb.Item>
-          <Breadcrumb.Item active aria-current="page">
-            {name}
-          </Breadcrumb.Item>
-        </Breadcrumb>
-
-
-        <Button
-          as={Link}
-          to="/"
-          variant="outline-secondary"
-          size="sm"
-          className="ms-2"
-        >
+    <main className={styles.detailPage}>
+      <header className={styles.header}>
+        <nav>
+          <ol className={styles.breadcrumb}>
+            <li className={styles.breadcrumbItem}>
+              <Link to="/" className={styles.breadcrumbLink}>
+                Home
+              </Link>
+              <span>›</span>
+            </li>
+            <li className={styles.breadcrumbItem}>
+              <span>{name}</span>
+            </li>
+          </ol>
+        </nav>
+        <Link to="/" className={styles.backButton}>
           ← Volver a productos
-        </Button>
+        </Link>
       </header>
 
-      <Row
-        as="article"
-        className="g-4 align-items-start"
-        aria-labelledby="producto-titulo"
-      >
-       
-        <Col md={6}>
-          <Card as="section" className="shadow-sm border-0 rounded-4">
-            {image ? (
-              <figure className="m-0 card-img-viewport-lg">
-                <Card.Img
-                  src={image}
-                  alt={name}
-                  loading="lazy"
-                  className="object-cover h-100 w-100 img-zoom"
-                />
-              </figure>
-            ) : (
-              <section
-                className="d-flex align-items-center justify-content-center bg-light card-img-viewport-lg"
-                aria-label="Sin imagen disponible"
-              >
-                <span className="text-muted">Sin imagen</span>
-              </section>
-            )}
-          </Card>
-        </Col>
+      <article className={styles.content}>
+        <section className={styles.imageSection}>
+          {image ? (
+            <img
+              src={image}
+              alt={name}
+              className={styles.productImage}
+              loading="lazy"
+            />
+          ) : (
+            <div className={styles.noImage}>Sin imagen disponible</div>
+          )}
+        </section>
 
-        <Col md={6} as="section">
-          <div className="d-flex align-items-center gap-2 mb-2">
-            <h1 id="producto-titulo" className="h2 m-0">
-              {name}
-            </h1>
-            <Badge
-              bg={sinStock ? "danger" : "success"}
-              className="align-middle"
-              aria-label={sinStock ? "Sin stock" : "En stock"}
+        <section className={styles.infoSection}>
+          <div className={styles.titleRow}>
+            <h1 className={styles.productTitle}>{name}</h1>
+            <span
+              className={`${styles.stockBadge} ${
+                sinStock ? styles.stockOut : styles.stockAvailable
+              }`}
             >
               {sinStock ? "Sin stock" : "En stock"}
-            </Badge>
+            </span>
           </div>
 
-          <p className="text-success h4" aria-label="Precio">
+          <div className={styles.price}>
             {typeof price === "number" ? currency.format(price) : `$${price}`}
-          </p>
+          </div>
 
           {Number.isFinite(stockNum) && (
             <p
-              className={`mb-1 ${sinStock ? "text-danger" : "text-success"}`}
-              aria-live="polite"
+              className={`${styles.stockInfo} ${
+                sinStock ? styles.stockInfoOut : styles.stockInfoAvailable
+              }`}
             >
               {sinStock ? "Stock no disponible" : `Unidades: ${stockNum}`}
             </p>
           )}
 
-          {description && (
-            <p className="text-body-secondary mt-3" aria-label="Descripción">
-              {description}
-            </p>
-          )}
+          {description && <p className={styles.description}>{description}</p>}
 
-          <nav
-            className="d-flex flex-wrap gap-2 mt-4"
-            aria-label="Acciones de compra"
-          >
-            <Button
-              variant="success"
+          <nav className={styles.actions}>
+            <button
+              className={styles.addButton}
               onClick={() => {
                 addToCart(product, 1);
                 navigate("/cart");
               }}
               disabled={sinStock}
-              aria-disabled={sinStock}
             >
               Añadir al carrito
-            </Button>
-
-            <Button variant="outline-secondary" onClick={() => navigate(-1)}>
+            </button>
+            <button
+              className={styles.returnButton}
+              onClick={() => navigate(-1)}
+            >
               Volver
-            </Button>
+            </button>
           </nav>
-        </Col>
-      </Row>
-    </Container>
+        </section>
+      </article>
+    </main>
   );
 };
 

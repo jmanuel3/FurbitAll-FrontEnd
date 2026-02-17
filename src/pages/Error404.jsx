@@ -1,16 +1,16 @@
-
-import { Container, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import styles from "./Error404.module.css";
 
 const Error404 = () => (
-  <main className="py-5">
-    <Container className="text-center">
-      <h1 className="display-5 fw-bold mb-3">404</h1>
-      <p className="lead mb-4">Lo que buscás no existe o fue movido.</p>
-      <Button as={Link} to="/" variant="dark" className="px-4 rounded-3">
+  <main className={styles.errorPage}>
+    <div className={styles.errorContainer}>
+      <h1 className={styles.errorCode}>404</h1>
+      <p className={styles.errorTitle}>Lo que buscás no existe o fue movido.</p>
+      <Link to="/" className={styles.homeButton}>
         Volver al inicio
-      </Button>
-    </Container>
+      </Link>
+    </div>
   </main>
 );
+
 export default Error404;
