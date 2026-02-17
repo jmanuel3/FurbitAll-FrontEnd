@@ -1,8 +1,6 @@
-
 import { useEffect, useState } from "react";
-import Carousel from "react-bootstrap/Carousel";
 import { getAds } from "../services/adService";
-import "../styles/Ad.css";
+import styles from "./Ad.module.css";
 
 const FALLBACK_SLIDES = [
   {
@@ -31,7 +29,9 @@ const FALLBACK_SLIDES = [
 
 const Ad = () => {
   const [slides, setSlides] = useState([]);
-  const [status, setStatus] = useState("idle"); 
+  const [status, setStatus] = useState("idle");
+  const [currentSlide, setCurrentSlide] = useState(0);
+
   useEffect(() => {
     let ignore = false;
 
@@ -66,51 +66,116 @@ const Ad = () => {
     };
   }, []);
 
-  
+  // Auto-play
+  useEffect(() => {
+    if (slides.length === 0) return;
+
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  const goToSlide = (index) => {
+    setCurrentSlide(index);
+  };
+
+  const goToPrevious = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+
+  const goToNext = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
   if (status === "loading") {
     return (
-      <section className="ad-wrap" aria-label="Cargando publicidad">
-        <div className="ad-slide skeleton rounded-4" />
+      <section className={styles.adSection} aria-label="Cargando publicidad">
+        <div className={styles.skeleton} />
       </section>
     );
   }
 
+  if (slides.length === 0) return null;
+
   return (
-    <section className="ad-wrap" aria-label="Carousel publicitario">
-      <Carousel
-        fade
-        touch
-        controls
-        indicators
-        interval={4000}
-        pause="hover"
-        className="shadow-lg rounded-4 overflow-hidden"
-      >
-        {slides.map((slide) => (
-          <Carousel.Item key={slide.id}>
-            <figure className="ad-slide m-0 position-relative">
-              
-              <div className="ratio ratio-16x9">
+    <section className={styles.adSection} aria-label="Carousel publicitario">
+      <div className={styles.carouselContainer}>
+        <div className={styles.carousel}>
+          <div
+            className={styles.slideWrapper}
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {slides.map((slide) => (
+              <div key={slide.id} className={styles.slide}>
                 <img
-                  className="w-100 h-100"
                   src={slide.image}
                   alt={slide.alt}
+                  className={styles.slideImage}
                   loading="lazy"
-                  style={{ objectFit: "cover" }}
                 />
+                <div className={styles.gradient} />
+                {(slide.title || slide.text) && (
+                  <div className={styles.caption}>
+                    {slide.title && (
+                      <h3 className={styles.captionTitle}>{slide.title}</h3>
+                    )}
+                    {slide.text && (
+                      <p className={styles.captionText}>{slide.text}</p>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="ad-gradient" />
-            </figure>
+            ))}
+          </div>
 
-            {(slide.title || slide.text) && (
-              <Carousel.Caption className="ad-caption d-none d-md-block">
-                {slide.title && <h5>{slide.title}</h5>}
-                {slide.text && <p>{slide.text}</p>}
-              </Carousel.Caption>
-            )}
-          </Carousel.Item>
-        ))}
-      </Carousel>
+          {/* Navigation Arrows */}
+          <button
+            onClick={goToPrevious}
+            className={`${styles.navButton} ${styles.prevButton}`}
+            aria-label="Slide anterior"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+
+          <button
+            onClick={goToNext}
+            className={`${styles.navButton} ${styles.nextButton}`}
+            aria-label="Siguiente slide"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+
+          {/* Indicators */}
+          <div className={styles.indicators}>
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`${styles.indicator} ${
+                  index === currentSlide ? styles.active : ""
+                }`}
+                aria-label={`Ir al slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </section>
   );
 };

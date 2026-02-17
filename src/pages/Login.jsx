@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { loginUser } from "../services/authService";
-import { useNavigate } from "react-router-dom";
-import { Container, Form, Button, Row, Col, Alert } from "react-bootstrap";
+import { useNavigate, Link } from "react-router-dom";
+import styles from "../styles/AuthForms.module.css";
 
 const Login = () => {
   const { login } = useAuth();
@@ -10,56 +10,82 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
     try {
       const { token, user } = await loginUser(email, password);
       login(token, user);
       navigate(user.role === "admin" ? "/admin" : "/");
-      alert("¡Sesión iniciada con éxito!");
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Error al iniciar sesión");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Container className="my-5">
-      <Row className="justify-content-center">
-        <Col md={4}>
-          <h2 className="mb-4 text-center">Iniciar sesión</h2>
-          {error && <Alert variant="danger">{error}</Alert>}
-          <Form
-            onSubmit={handleSubmit}
-            className="p-4 border rounded shadow bg-light"
+    <div className={styles.authContainer}>
+      <div className={styles.authCard}>
+        <h2 className={styles.authTitle}>Bienvenido</h2>
+        <p className={styles.authSubtitle}>Inicia sesión en tu cuenta</p>
+
+        {error && (
+          <div className={`${styles.alert} ${styles.alertError}`}>{error}</div>
+        )}
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label htmlFor="email" className={styles.label}>
+              Correo electrónico
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={styles.input}
+              required
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="password" className={styles.label}>
+              Contraseña
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={styles.input}
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className={styles.submitButton}
+            disabled={isLoading}
           >
-            <Form.Group className="mb-3">
-              <Form.Label>Correo</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="Ingrese su correo"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Contraseña</Form.Label>
-              <Form.Control
-                type="password"
-                placeholder="Ingrese su contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </Form.Group>
-            <Button type="submit" variant="success" className="w-100">
-              Entrar
-            </Button>
-          </Form>
-        </Col>
-      </Row>
-    </Container>
+            {isLoading ? "Iniciando sesión..." : "Entrar"}
+          </button>
+        </form>
+
+        <div className={styles.footer}>
+          ¿No tienes cuenta?{" "}
+          <Link to="/register" className={styles.footerLink}>
+            Regístrate aquí
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 };
 

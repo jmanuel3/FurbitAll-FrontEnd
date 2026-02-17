@@ -1,111 +1,116 @@
-
 import { useState } from "react";
-import { Navbar, Nav, Container, Badge } from "react-bootstrap";
 import { NavLink, useNavigate } from "react-router-dom";
 import Logo from "../../assets/Logo.png";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
-import "../../styles/Navbar.css";
+import styles from "./Navbar.module.css";
 
 function Menu() {
   const { token, user, logout } = useAuth();
   const { cartCount } = useCart();
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
 
-
-  const [expanded, setExpanded] = useState(false);
-  const closeMenu = () => setExpanded(false);
+  const closeMenu = () => setIsOpen(false);
 
   const handleLogout = () => {
     logout();
-    closeMenu(); 
+    closeMenu();
     navigate("/login");
   };
 
   return (
-    <Navbar
-      expand="lg"
-      className="menu"
-      sticky="top"
-      expanded={expanded}
-      onToggle={(next) => setExpanded(next)}
-    >
-      <Container fluid className="px-4">
-        <NavLink
-          to="/"
-          className="navbar-brand d-flex align-items-center"
-          onClick={closeMenu} 
-        >
-          <img
-            src={Logo}
-            alt="Logo FurbitAll"
-            className="img-fluid"
-            width={100}
-          />
-        </NavLink>
+    <>
+      <nav className={styles.navbar}>
+        <div className={styles.navContainer}>
+          <NavLink to="/" className={styles.logo} onClick={closeMenu}>
+            <img
+              src={Logo}
+              alt="Logo FurbitAll"
+              className={styles.logoImage}
+            />
+          </NavLink>
 
-        <Navbar.Toggle aria-controls="navbarScroll" />
+          <button
+            className={`${styles.menuToggle} ${isOpen ? styles.active : ''}`}
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
+          >
+            <span className={styles.hamburger}></span>
+          </button>
 
-        <Navbar.Collapse id="navbarScroll">
-          <Nav className="ms-auto gap-2" navbarScroll>
-            
-            {!token && (
+          <div className={`${styles.navMenu} ${isOpen ? styles.open : ''}`}>
+            {!token ? (
               <>
-                <NavLink end className="nav-link" to="/" onClick={closeMenu}>
+                <NavLink
+                  end
+                  to="/"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.active : ''}`
+                  }
+                  onClick={closeMenu}
+                >
                   Inicio
                 </NavLink>
                 <NavLink
-                  end
-                  className="nav-link"
                   to="/sobre-nosotros"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.active : ''}`
+                  }
                   onClick={closeMenu}
                 >
                   Sobre Nosotros
                 </NavLink>
                 <NavLink
-                  end
-                  className="nav-link"
                   to="/cart"
-                  aria-label="Carrito"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${styles.cartLink} ${isActive ? styles.active : ''}`
+                  }
                   onClick={closeMenu}
                 >
                   Carrito
                   {cartCount > 0 && (
-                    <Badge bg="success" pill className="ms-1">
-                      {cartCount}
-                    </Badge>
+                    <span className={styles.cartBadge}>{cartCount}</span>
                   )}
                 </NavLink>
                 <NavLink
-                  end
-                  className="nav-link"
                   to="/register"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.active : ''}`
+                  }
                   onClick={closeMenu}
                 >
                   Registro
                 </NavLink>
                 <NavLink
-                  end
-                  className="nav-link"
                   to="/login"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.active : ''}`
+                  }
                   onClick={closeMenu}
                 >
                   Login
                 </NavLink>
               </>
-            )}
-
-            {token && (
+            ) : (
               <>
-                <NavLink end className="nav-link" to="/" onClick={closeMenu}>
+                <NavLink
+                  end
+                  to="/"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.active : ''}`
+                  }
+                  onClick={closeMenu}
+                >
                   Inicio
                 </NavLink>
 
                 {user?.role === "admin" && (
                   <NavLink
-                    end
-                    className="nav-link"
                     to="/admin"
+                    className={({ isActive }) =>
+                      `${styles.navLink} ${isActive ? styles.active : ''}`
+                    }
                     onClick={closeMenu}
                   >
                     Administración
@@ -113,50 +118,54 @@ function Menu() {
                 )}
 
                 <NavLink
-                  end
-                  className="nav-link"
                   to="/reservas"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.active : ''}`
+                  }
                   onClick={closeMenu}
                 >
                   Reservas
                 </NavLink>
                 <NavLink
-                  end
-                  className="nav-link"
                   to="/sobre-nosotros"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.active : ''}`
+                  }
                   onClick={closeMenu}
                 >
                   Sobre Nosotros
                 </NavLink>
-
                 <NavLink
-                  end
-                  className="nav-link d-flex align-items-center"
                   to="/cart"
-                  aria-label="Carrito"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${styles.cartLink} ${isActive ? styles.active : ''}`
+                  }
                   onClick={closeMenu}
                 >
                   Carrito
                   {cartCount > 0 && (
-                    <Badge bg="success" pill className="ms-1">
-                      {cartCount}
-                    </Badge>
+                    <span className={styles.cartBadge}>{cartCount}</span>
                   )}
                 </NavLink>
 
-                <span
-                  className="nav-link"
-                  style={{ cursor: "pointer" }}
+                <button
+                  className={styles.logoutButton}
                   onClick={handleLogout}
                 >
                   Cerrar sesión
-                </span>
+                </button>
               </>
             )}
-          </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile overlay */}
+      <div
+        className={`${styles.overlay} ${isOpen ? styles.visible : ''}`}
+        onClick={closeMenu}
+      />
+    </>
   );
 }
 

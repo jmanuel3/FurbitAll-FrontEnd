@@ -1,4 +1,4 @@
-import { Modal, Button, Form, Alert } from "react-bootstrap";
+import styles from "./Modal.module.css";
 
 const FieldModal = ({
   show,
@@ -9,30 +9,44 @@ const FieldModal = ({
   saving,
   error,
 }) => {
+  if (!show || !fieldData) return null;
+
   return (
-    <Modal
-      show={show}
-      onHide={saving ? undefined : onHide}
-      backdrop="static"
-      keyboard={!saving}
-      centered
-    >
-      <Modal.Header closeButton={!saving}>
-        <Modal.Title>{fieldData?._id ? "Editar" : "Crear"} cancha</Modal.Title>
-      </Modal.Header>
+    <div className={styles.overlay} onClick={saving ? undefined : onHide}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <header className={styles.header}>
+          <h2 className={styles.title}>
+            {fieldData._id ? "Editar" : "Crear"} cancha
+          </h2>
+          <button
+            className={styles.closeButton}
+            onClick={onHide}
+            disabled={saving}
+            aria-label="Cerrar"
+          >
+            ×
+          </button>
+        </header>
 
-      <Modal.Body>
-        {error && (
-          <Alert variant="danger" className="py-2">
-            {error}
-          </Alert>
-        )}
+        <div className={styles.body}>
+          {error && (
+            <div className={`${styles.alert} ${styles.alertDanger}`}>
+              {error}
+            </div>
+          )}
 
-        {fieldData && (
-          <Form>
-            <Form.Group className="mb-3" controlId="fieldName">
-              <Form.Label>Nombre *</Form.Label>
-              <Form.Control
+          <form>
+            {/* Name */}
+            <div className={styles.formGroup}>
+              <label
+                htmlFor="fieldName"
+                className={`${styles.label} ${styles.required}`}
+              >
+                Nombre
+              </label>
+              <input
+                id="fieldName"
+                type="text"
                 name="name"
                 value={fieldData.name}
                 onChange={onChange}
@@ -40,44 +54,68 @@ const FieldModal = ({
                 required
                 autoFocus
                 disabled={saving}
+                className={styles.input}
               />
-            </Form.Group>
+            </div>
 
-            <Form.Group className="mb-3" controlId="fieldLocation">
-              <Form.Label>Ubicación *</Form.Label>
-              <Form.Control
+            {/* Location */}
+            <div className={styles.formGroup}>
+              <label
+                htmlFor="fieldLocation"
+                className={`${styles.label} ${styles.required}`}
+              >
+                Ubicación
+              </label>
+              <input
+                id="fieldLocation"
+                type="text"
                 name="location"
                 value={fieldData.location}
                 onChange={onChange}
                 placeholder="Ej: Avenida 123"
                 required
                 disabled={saving}
+                className={styles.input}
               />
-            </Form.Group>
+            </div>
 
-            <Form.Group className="mb-2" controlId="fieldImage">
-              <Form.Label>URL de imagen</Form.Label>
-              <Form.Control
+            {/* Image URL */}
+            <div className={styles.formGroup}>
+              <label htmlFor="fieldImage" className={styles.label}>
+                URL de imagen
+              </label>
+              <input
+                id="fieldImage"
+                type="text"
                 name="image"
                 value={fieldData.image}
                 onChange={onChange}
                 placeholder="https://ejemplo.com/cancha.jpg"
                 disabled={saving}
+                className={styles.input}
               />
-            </Form.Group>
-          </Form>
-        )}
-      </Modal.Body>
+            </div>
+          </form>
+        </div>
 
-      <Modal.Footer>
-        <Button variant="secondary" onClick={onHide} disabled={saving}>
-          Cancelar
-        </Button>
-        <Button variant="primary" onClick={onSave} disabled={saving}>
-          {saving ? "Guardando..." : "Guardar cambios"}
-        </Button>
-      </Modal.Footer>
-    </Modal>
+        <footer className={styles.footer}>
+          <button
+            className={styles.cancelButton}
+            onClick={onHide}
+            disabled={saving}
+          >
+            Cancelar
+          </button>
+          <button
+            className={styles.saveButton}
+            onClick={onSave}
+            disabled={saving}
+          >
+            {saving ? "Guardando..." : "Guardar cambios"}
+          </button>
+        </footer>
+      </div>
+    </div>
   );
 };
 

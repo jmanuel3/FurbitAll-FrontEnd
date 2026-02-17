@@ -18,19 +18,11 @@ import {
   createReservation,
 } from "../services/reservationService";
 import { useAuth } from "../context/AuthContext";
-import {
-  Modal,
-  Button,
-  Form,
-  Alert,
-  Table,
-  Stack,
-  Badge,
-  Spinner,
-} from "react-bootstrap";
 import FieldModal from "../components/modals/FieldModal";
 import ProductModal from "../components/modals/ProductModal";
 import ReservationModal from "../components/modals/ReservationModal";
+import styles from "./Admin.module.css";
+
 const Admin = () => {
   const { token, user } = useAuth();
 
@@ -101,18 +93,18 @@ const Admin = () => {
   };
 
   const openEditProduct = (p) => {
-  setEditingProductData({
-    _id: p._id,
-    name: p.name ?? "",
-    price: p.price ?? "",
-    description: p.description ?? "",
-    stock: p.stock ?? 0,
-    image: p.image ?? "",
-    currentImage: null
-  });
-  setProductFormError("");
-  setProductModalOpen(true);
-};
+    setEditingProductData({
+      _id: p._id,
+      name: p.name ?? "",
+      price: p.price ?? "",
+      description: p.description ?? "",
+      stock: p.stock ?? 0,
+      image: p.image ?? "",
+      currentImage: null,
+    });
+    setProductFormError("");
+    setProductModalOpen(true);
+  };
 
   const closeProductModal = () => {
     if (savingProduct) return;
@@ -128,48 +120,47 @@ const Admin = () => {
   };
 
   const saveProduct = async () => {
-  try {
-    setProductFormError("");
-    const name = safe(editingProductData?.name);
-    const price = Number(editingProductData?.price);
+    try {
+      setProductFormError("");
+      const name = safe(editingProductData?.name);
+      const price = Number(editingProductData?.price);
 
-    if (!name) return setProductFormError("El nombre es obligatorio.");
-    if (Number.isNaN(price) || price < 0)
-      return setProductFormError("Precio inválido.");
+      if (!name) return setProductFormError("El nombre es obligatorio.");
+      if (Number.isNaN(price) || price < 0)
+        return setProductFormError("Precio inválido.");
 
-    // Mantener el payload como objeto JSON (sin FormData)
-    const payload = {
-      name,
-      price,
-      description: safe(editingProductData?.description) || "",
-      image: safe(editingProductData?.image) || "" // URL de la imagen
-    };
+      const payload = {
+        name,
+        price,
+        description: safe(editingProductData?.description) || "",
+        image: safe(editingProductData?.image) || "",
+      };
 
-    if ("stock" in editingProductData) {
-      const stock = Number(editingProductData.stock);
-      if (Number.isNaN(stock) || stock < 0)
-        return setProductFormError("Stock inválido.");
-      payload.stock = stock;
+      if ("stock" in editingProductData) {
+        const stock = Number(editingProductData.stock);
+        if (Number.isNaN(stock) || stock < 0)
+          return setProductFormError("Stock inválido.");
+        payload.stock = stock;
+      }
+
+      setSavingProduct(true);
+
+      if (editingProductData?._id) {
+        await updateProduct(token, editingProductData._id, payload);
+        setFeedback({ variant: "success", text: "Producto actualizado." });
+      } else {
+        await createProduct(token, payload);
+        setFeedback({ variant: "success", text: "Producto creado." });
+      }
+
+      const prodData = await getProducts();
+      setProducts(prodData);
+      closeProductModal();
+    } catch (e) {
+      setSavingProduct(false);
+      setProductFormError(e.message || "Error al guardar el producto");
     }
-
-    setSavingProduct(true);
-
-    if (editingProductData?._id) {
-      await updateProduct(token, editingProductData._id, payload);
-      setFeedback({ variant: "success", text: "Producto actualizado." });
-    } else {
-      await createProduct(token, payload);
-      setFeedback({ variant: "success", text: "Producto creado." });
-    }
-
-    const prodData = await getProducts();
-    setProducts(prodData);
-    closeProductModal();
-  } catch (e) {
-    setSavingProduct(false);
-    setProductFormError(e.message || "Error al guardar el producto");
-  }
-};
+  };
 
   const handleDeleteProduct = async (id) => {
     if (!window.confirm("¿Estás seguro de eliminar este producto?")) return;
@@ -215,7 +206,6 @@ const Admin = () => {
       setFieldFormError("");
 
       if (!token) {
-        console.warn("⛔ Token no definido");
         return setFieldFormError("Token inválido, vuelve a iniciar sesión.");
       }
 
@@ -229,7 +219,7 @@ const Admin = () => {
       const nameExists = fields.some(
         (f) =>
           f.name.toLowerCase() === name.toLowerCase() &&
-          f._id !== editingFieldData._id
+          f._id !== editingFieldData._id,
       );
       if (nameExists)
         return setFieldFormError("Ya existe una cancha con ese nombre.");
@@ -307,33 +297,23 @@ const Admin = () => {
         const dt = new Date(`${dateStr}T${hourStr}:00`);
         return dt.getTime() > Date.now();
       };
-      const nextSlot = (hhmm) => {
-        const [h, m] = hhmm.split(":").map((n) => parseInt(n, 10));
-        let H = h,
-          M = m + 30;
-        if (M >= 60) {
-          M = 0;
-          H += 1;
-        }
-        return `${String(H).padStart(2, "0")}:${String(M).padStart(2, "0")}`;
-      };
 
       if (!field || !date || !hour || duration == null) {
         return setReservationFormError("Todos los campos son obligatorios.");
       }
       if (!isValidDateFormat(date)) {
         return setReservationFormError(
-          "Formato de fecha inválido (YYYY-MM-DD)."
+          "Formato de fecha inválido (YYYY-MM-DD).",
         );
       }
       if (!isValidHourStep(hour)) {
         return setReservationFormError(
-          "La hora debe ser un múltiplo de 30 minutos (HH:00 o HH:30)."
+          "La hora debe ser un múltiplo de 30 minutos (HH:00 o HH:30).",
         );
       }
       if (!isValidDuration(duration)) {
         return setReservationFormError(
-          "Duración inválida. Usa 30 o 60 minutos."
+          "Duración inválida. Usa 30 o 60 minutos.",
         );
       }
       if (!isFutureDateTime(date, hour)) {
@@ -391,12 +371,9 @@ const Admin = () => {
 
     try {
       setFeedback({ variant: "info", text: "Cancelando reserva..." });
-
       await deleteReservation(token, id);
-
       const updated = await getAllReservations(token);
       setReservations(updated);
-
       setFeedback({ variant: "success", text: "Reserva cancelada." });
     } catch (err) {
       setFeedback({
@@ -407,7 +384,11 @@ const Admin = () => {
   };
 
   if (user?.role !== "admin") {
-    return <p>⛔ No tenés permiso para ver esta sección.</p>;
+    return (
+      <p className={styles.unauthorized}>
+        ⛔ No tenés permiso para ver esta sección.
+      </p>
+    );
   }
 
   const reservationsByUser = Object.entries(
@@ -415,39 +396,52 @@ const Admin = () => {
       const email = r.user?.email || "desconocido";
       acc[email] = (acc[email] || 0) + 1;
       return acc;
-    }, {})
+    }, {}),
   ).sort((a, b) => b[1] - a[1]);
 
   return (
-    <section>
-      <h2 className="mb-3">🛠️ Panel de Administración</h2>
+    <div className={styles.adminContainer}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>🛠️ Panel de Administración</h1>
+      </header>
 
       {feedback && (
-        <Alert
-          variant={feedback.variant}
-          onClose={() => setFeedback(null)}
-          dismissible
+        <div
+          className={`${styles.alert} ${
+            feedback.variant === "success"
+              ? styles.alertSuccess
+              : feedback.variant === "danger"
+                ? styles.alertDanger
+                : styles.alertInfo
+          }`}
         >
-          {feedback.text}
-        </Alert>
-      )}
-
-      {loading && (
-        <div className="d-flex align-items-center gap-2 mb-3">
-          <Spinner animation="border" size="sm" />
-          <span>Cargando…</span>
+          <span>{feedback.text}</span>
+          <button
+            className={styles.closeAlert}
+            onClick={() => setFeedback(null)}
+            aria-label="Cerrar alerta"
+          >
+            ×
+          </button>
         </div>
       )}
 
-      <section className="mb-4 ">
-        <Stack direction="horizontal" className="mb-2" gap={2}>
-          <h3 className="mb-0">📦 Productos</h3>
-          <Badge bg="secondary">{products.length}</Badge>
+      {loading && (
+        <div className={styles.loading}>
+          <div className={styles.spinner}></div>
+          <span>Cargando datos...</span>
+        </div>
+      )}
 
-          <Button
-            size="sm"
-            variant="warning"
-            className="ms-auto m-2"
+      {/* Products Section */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionTitleGroup}>
+            <h2 className={styles.sectionTitle}>📦 Productos</h2>
+            <span className={styles.badge}>{products.length}</span>
+          </div>
+          <button
+            className={styles.addButton}
             onClick={() => {
               setEditingProductData({
                 name: "",
@@ -455,27 +449,25 @@ const Admin = () => {
                 description: "",
                 stock: 0,
                 image: "",
-                currentImage: null
+                currentImage: null,
               });
               setProductFormError("");
               setProductModalOpen(true);
             }}
           >
             ➕ Añadir producto
-          </Button>
-        </Stack>
+          </button>
+        </div>
 
         {products.length === 0 ? (
-          <p className="text-muted">No hay productos.</p>
+          <p className={styles.emptyState}>No hay productos registrados</p>
         ) : (
-          <Table striped hover responsive size="sm">
+          <table className={styles.table}>
             <thead>
               <tr>
                 <th>Nombre</th>
-                <th style={{ width: 140 }}>Precio</th>
-                <th style={{ width: 160 }} className="text-end">
-                  Acciones
-                </th>
+                <th style={{ width: "140px" }}>Precio</th>
+                <th style={{ width: "180px" }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -483,43 +475,38 @@ const Admin = () => {
                 <tr key={p._id}>
                   <td>{p.name}</td>
                   <td>${p.price}</td>
-                  <td className="text-end">
-                    <Stack
-                      direction="horizontal"
-                      gap={2}
-                      className="justify-content-end"
-                    >
-                      <Button
-                        size="sm"
-                        variant="primary"
+                  <td>
+                    <div className={styles.actions}>
+                      <button
+                        className={styles.editButton}
                         onClick={() => openEditProduct(p)}
                       >
                         Editar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
+                      </button>
+                      <button
+                        className={styles.deleteButton}
                         onClick={() => handleDeleteProduct(p._id)}
                       >
                         Eliminar
-                      </Button>
-                    </Stack>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </Table>
+          </table>
         )}
       </section>
 
-      <section className="mb-4">
-        <Stack direction="horizontal" className="mb-2" gap={2}>
-          <h3 className="mb-0">🏟️ Canchas</h3>
-          <Badge bg="secondary">{fields.length}</Badge>
-          <Button
-            variant="warning"
-            size="sm"
-            className="ms-auto m-2"
+      {/* Fields Section */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionTitleGroup}>
+            <h2 className={styles.sectionTitle}>🏟️ Canchas</h2>
+            <span className={styles.badge}>{fields.length}</span>
+          </div>
+          <button
+            className={styles.addButton}
             onClick={() => {
               setEditingFieldData({
                 name: "",
@@ -531,20 +518,18 @@ const Admin = () => {
             }}
           >
             ➕ Añadir cancha
-          </Button>
-        </Stack>
+          </button>
+        </div>
 
         {fields.length === 0 ? (
-          <p className="text-muted">No hay canchas disponibles.</p>
+          <p className={styles.emptyState}>No hay canchas disponibles</p>
         ) : (
-          <Table striped hover responsive size="sm">
+          <table className={styles.table}>
             <thead>
               <tr>
                 <th>Nombre</th>
                 <th>Ubicación</th>
-                <th style={{ width: 160 }} className="text-end">
-                  Acciones
-                </th>
+                <th style={{ width: "180px" }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -552,43 +537,38 @@ const Admin = () => {
                 <tr key={f._id}>
                   <td>{f.name}</td>
                   <td>{f.location}</td>
-                  <td className="text-end">
-                    <Stack
-                      direction="horizontal"
-                      gap={2}
-                      className="justify-content-end"
-                    >
-                      <Button
-                        size="sm"
-                        variant="primary"
+                  <td>
+                    <div className={styles.actions}>
+                      <button
+                        className={styles.editButton}
                         onClick={() => openEditField(f)}
                       >
                         Editar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
+                      </button>
+                      <button
+                        className={styles.deleteButton}
                         onClick={() => handleDeleteField(f._id)}
                       >
                         Eliminar
-                      </Button>
-                    </Stack>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </Table>
+          </table>
         )}
       </section>
 
-      <section className="mb-4">
-        <Stack direction="horizontal" className="mb-2" gap={2}>
-          <h3 className="mb-0">🏟️ Reservas</h3>
-          <Badge bg="secondary">{reservations.length}</Badge>
-          <Button
-            size="sm"
-            variant="warning"
-            className="ms-auto m-2"
+      {/* Reservations Section */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionTitleGroup}>
+            <h2 className={styles.sectionTitle}>📅 Reservas</h2>
+            <span className={styles.badge}>{reservations.length}</span>
+          </div>
+          <button
+            className={styles.addButton}
             onClick={() => {
               setEditingReservationId(null);
               setEditingReservationData({
@@ -602,22 +582,20 @@ const Admin = () => {
             }}
           >
             ➕ Añadir reserva
-          </Button>
-        </Stack>
+          </button>
+        </div>
 
         {reservations.length === 0 ? (
-          <p className="text-muted">No hay reservas registradas.</p>
+          <p className={styles.emptyState}>No hay reservas registradas</p>
         ) : (
-          <Table striped hover responsive size="sm">
+          <table className={styles.table}>
             <thead>
               <tr>
                 <th>Cancha</th>
-                <th style={{ width: 120 }}>Fecha</th>
-                <th style={{ width: 100 }}>Hora</th>
+                <th style={{ width: "120px" }}>Fecha</th>
+                <th style={{ width: "100px" }}>Hora</th>
                 <th>Usuario</th>
-                <th style={{ width: 180 }} className="text-end">
-                  Acciones
-                </th>
+                <th style={{ width: "180px" }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -627,45 +605,40 @@ const Admin = () => {
                   <td>{r.date}</td>
                   <td>{r.hour}</td>
                   <td>{r.user?.email || "desconocido"}</td>
-                  <td className="text-end">
-                    <Stack
-                      direction="horizontal"
-                      gap={2}
-                      className="justify-content-end"
-                    >
-                      <Button
-                        size="sm"
-                        variant="primary"
+                  <td>
+                    <div className={styles.actions}>
+                      <button
+                        className={styles.editButton}
                         onClick={() => openEditReservation(r)}
                       >
                         Editar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
+                      </button>
+                      <button
+                        className={styles.deleteButton}
                         onClick={() => handleDeleteReservation(r._id)}
                       >
                         Eliminar
-                      </Button>
-                    </Stack>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </Table>
+          </table>
         )}
       </section>
 
-      <section className="mb-4">
-        <h4>👥 Reservas por usuario</h4>
+      {/* User Stats Section */}
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>👥 Reservas por usuario</h3>
         {reservationsByUser.length === 0 ? (
-          <p className="text-muted">Sin datos.</p>
+          <p className={styles.emptyState}>Sin datos</p>
         ) : (
-          <Table bordered responsive size="sm">
+          <table className={styles.table}>
             <thead>
               <tr>
                 <th>Usuario</th>
-                <th style={{ width: 120 }}>Reservas</th>
+                <th style={{ width: "120px" }}>Reservas</th>
               </tr>
             </thead>
             <tbody>
@@ -676,10 +649,11 @@ const Admin = () => {
                 </tr>
               ))}
             </tbody>
-          </Table>
+          </table>
         )}
       </section>
 
+      {/* Modals */}
       <ProductModal
         show={productModalOpen}
         onHide={closeProductModal}
@@ -711,7 +685,7 @@ const Admin = () => {
         error={reservationFormError}
         fields={fields}
       />
-    </section>
+    </div>
   );
 };
 

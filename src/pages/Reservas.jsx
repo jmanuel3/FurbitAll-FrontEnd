@@ -8,35 +8,28 @@ import {
 } from "../services/reservationService";
 import { useAuth } from "../context/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  Container,
-  Form,
-  Button,
-  Row,
-  Col,
-  ListGroup,
-  Alert,
-  OverlayTrigger,
-  Tooltip,
-} from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import styles from "./Reservas.module.css";
 
 const localISODate = (dateObj) => {
   if (!dateObj) return "";
   const tz = dateObj.getTimezoneOffset() * 60000;
   return new Date(dateObj.getTime() - tz).toISOString().slice(0, 10);
 };
+
 const isValidDateFormat = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 const isValidHourFormat = (s) => /^([01]\d|2[0-3]):([0-5]\d)$/.test(s);
 const isValidHourStep = (s) =>
   isValidHourFormat(s) && (s.endsWith(":00") || s.endsWith(":30"));
 const isValidDuration = (d) => [30, 60].includes(Number(d));
+
 const isFutureDateTime = (dateStr, hourStr) => {
   if (!isValidDateFormat(dateStr) || !isValidHourFormat(hourStr)) return false;
   const dt = new Date(`${dateStr}T${hourStr}:00`);
   return dt.getTime() > Date.now();
 };
+
 const nextSlot = (hhmm) => {
   const [h, m] = hhmm.split(":").map((n) => parseInt(n, 10));
   let H = h,
@@ -173,7 +166,7 @@ const Reservas = () => {
       });
 
       setMessage(
-        `✅ Reserva creada para ${reserva.date} a las ${reserva.hour}`
+        `✅ Reserva creada para ${reserva.date} a las ${reserva.hour}`,
       );
       setTimeout(() => setMessage(""), 3000);
 
@@ -193,7 +186,7 @@ const Reservas = () => {
 
   const handleCancel = async (id) => {
     const confirmDelete = window.confirm(
-      "¿Estás seguro de que querés cancelar esta reserva?"
+      "¿Estás seguro de que querés cancelar esta reserva?",
     );
     if (!confirmDelete) return;
 
@@ -216,231 +209,225 @@ const Reservas = () => {
   };
 
   return (
-    <Container className="my-5">
-      <Container>
-        <h2>Crear Reserva</h2>
+    <main className={styles.reservasPage}>
+      <h1 className={styles.pageTitle}>Reservas de Canchas</h1>
 
-        {message && (
-          <Alert
-            variant={message.startsWith("✅") ? "success" : "danger"}
-            className="mt-2"
-          >
-            {message}
-          </Alert>
-        )}
-
-        <Form
-          onSubmit={handleSubmit}
-          className="p-4 border rounded shadow-sm bg-light"
+      {message && (
+        <div
+          className={`${styles.alert} ${
+            message.startsWith("✅") ? styles.alertSuccess : styles.alertDanger
+          }`}
         >
-          <fieldset>
-            <legend className="mb-3 fs-4 text-success">Nueva Reserva</legend>
+          {message}
+        </div>
+      )}
 
-            <Row className="g-3">
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Cancha</Form.Label>
-                  <Form.Select
-                    value={selectedField}
-                    onChange={(e) => setSelectedField(e.target.value)}
+      {/* Form Section */}
+      <section className={styles.formCard}>
+        <h2 className={styles.formTitle}>📅 Nueva Reserva</h2>
+
+        <form onSubmit={handleSubmit}>
+          <div className={styles.formGrid}>
+            {/* Field Select */}
+            <div className={styles.formGroup}>
+              <label
+                htmlFor="field"
+                className={`${styles.label} ${styles.required}`}
+              >
+                Cancha
+              </label>
+              <select
+                id="field"
+                value={selectedField}
+                onChange={(e) => setSelectedField(e.target.value)}
+                className={styles.select}
+                required
+              >
+                <option value="">Seleccionar cancha</option>
+                {fields.map((f) => (
+                  <option key={f._id} value={f._id}>
+                    {f.name} — {f.location}
+                  </option>
+                ))}
+              </select>
+              {formErrors.field && (
+                <span className={styles.errorText}>{formErrors.field}</span>
+              )}
+            </div>
+
+            {/* Date Picker */}
+            <div className={styles.formGroup}>
+              <label
+                htmlFor="date"
+                className={`${styles.label} ${styles.required}`}
+              >
+                Fecha
+              </label>
+              <div className={styles.datePickerWrapper}>
+                <DatePicker
+                  id="date"
+                  selected={date ? new Date(date) : null}
+                  onChange={(dateObj) => setDate(localISODate(dateObj))}
+                  dateFormat="yyyy-MM-dd"
+                  minDate={new Date()}
+                  className={styles.input}
+                  placeholderText="Seleccioná una fecha"
+                  required
+                />
+              </div>
+              {formErrors.date && (
+                <span className={styles.errorText}>{formErrors.date}</span>
+              )}
+            </div>
+
+            {selectedField && date && (
+              <>
+                {/* Duration */}
+                <div className={styles.formGroup}>
+                  <label
+                    htmlFor="duration"
+                    className={`${styles.label} ${styles.required}`}
+                  >
+                    Duración
+                  </label>
+                  <select
+                    id="duration"
+                    value={duration}
+                    onChange={(e) => setDuration(parseInt(e.target.value))}
+                    className={styles.select}
                     required
                   >
-                    <option value="">Seleccionar cancha</option>
-                    {fields.map((f) => (
-                      <option key={f._id} value={f._id}>
-                        {f.name} — {f.location}
-                      </option>
-                    ))}
-                  </Form.Select>
-                  {formErrors.field && (
-                    <Form.Text className="text-danger">
-                      {formErrors.field}
-                    </Form.Text>
+                    <option value={30}>30 minutos</option>
+                    <option value={60}>1 hora</option>
+                  </select>
+                  {formErrors.duration && (
+                    <span className={styles.errorText}>
+                      {formErrors.duration}
+                    </span>
                   )}
-                </Form.Group>
-              </Col>
+                </div>
 
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Fecha</Form.Label>
-                  <DatePicker
-                    selected={date ? new Date(date) : null}
-                    onChange={(dateObj) => setDate(localISODate(dateObj))}
-                    dateFormat="yyyy-MM-dd"
-                    minDate={new Date()}
-                    className="form-control"
-                    placeholderText="Seleccioná una fecha"
+                {/* Hour */}
+                <div className={styles.formGroup}>
+                  <label
+                    htmlFor="hour"
+                    className={`${styles.label} ${styles.required}`}
+                  >
+                    Hora
+                  </label>
+                  <select
+                    id="hour"
+                    value={hour}
+                    onChange={(e) => setHour(e.target.value)}
+                    className={styles.select}
                     required
-                  />
-                  {formErrors.date && (
-                    <Form.Text className="text-danger">
-                      {formErrors.date}
-                    </Form.Text>
-                  )}
-                </Form.Group>
-              </Col>
-
-              {selectedField && date && (
-                <>
-                  <Col md={2}>
-                    <Form.Group>
-                      <Form.Label>Duración</Form.Label>
-                      <Form.Select
-                        value={duration}
-                        onChange={(e) => setDuration(parseInt(e.target.value))}
-                        required
-                      >
-                        <option value={30}>30 minutos</option>
-                        <option value={60}>1 hora</option>
-                      </Form.Select>
-                      {formErrors.duration && (
-                        <Form.Text className="text-danger">
-                          {formErrors.duration}
-                        </Form.Text>
-                      )}
-                    </Form.Group>
-                  </Col>
-
-                  <Col md={2}>
-                    <Form.Group>
-                      <Form.Label>Hora</Form.Label>
-                      <Form.Select
-                        value={hour}
-                        onChange={(e) => setHour(e.target.value)}
-                        required
-                        aria-describedby={
-                          Number(duration) === 60 ? "dur60-help" : undefined
+                  >
+                    <option value="">Seleccioná una hora</option>
+                    {generateTimeOptions()
+                      .filter((h) => {
+                        if (reservedHours.includes(h)) return false;
+                        if (duration === 60) {
+                          const n = nextSlot(h);
+                          if (reservedHours.includes(n)) return false;
                         }
+                        return true;
+                      })
+                      .map((h) => (
+                        <option key={h} value={h}>
+                          {h}
+                        </option>
+                      ))}
+                  </select>
+
+                  {Number(duration) === 60 && selectedField && date && (
+                    <p className={styles.helpText}>
+                      Para <strong>1 hora</strong> necesitás dos bloques
+                      seguidos de 30'. Si elegís{" "}
+                      <strong>{hour || "HH:mm"}</strong>, también debe estar
+                      libre{" "}
+                      <strong>
+                        {hour ? nextSlot(hour) : "siguiente bloque"}
+                      </strong>
+                      .{" "}
+                      <span
+                        className={styles.helpTextLink}
+                        title="Mostramos solo los horarios donde también está libre el siguiente bloque de 30'"
                       >
-                        <option value="">Seleccioná una hora</option>
-                        {generateTimeOptions()
-                          .filter((h) => {
-                            if (reservedHours.includes(h)) return false;
-                            if (duration === 60) {
-                              const [hourStr, minuteStr] = h.split(":");
-                              const hour = parseInt(hourStr, 10);
-                              const minute = parseInt(minuteStr, 10);
-                              let nextHour = hour;
-                              let nextMinute = minute + 30;
-                              if (nextMinute >= 60) {
-                                nextMinute = 0;
-                                nextHour += 1;
-                              }
-                              const nextSlotStr = `${String(nextHour).padStart(
-                                2,
-                                "0"
-                              )}:${String(nextMinute).padStart(2, "0")}`;
-                              if (reservedHours.includes(nextSlotStr))
-                                return false;
-                            }
-                            return true;
-                          })
-                          .map((h) => (
-                            <option key={h} value={h}>
-                              {h}
-                            </option>
-                          ))}
-                      </Form.Select>
+                        ¿Por qué?
+                      </span>
+                    </p>
+                  )}
 
-                      {Number(duration) === 60 && selectedField && date && (
-                        <div className="mt-1">
-                          <Form.Text id="dur60-help" className="text-muted">
-                            Para <strong>1 hora</strong> necesitás dos bloques
-                            seguidos de 30’. Si elegís{" "}
-                            <strong>{hour || "HH:mm"}</strong>, también debe
-                            estar libre{" "}
-                            <strong>
-                              {hour ? nextSlot(hour) : "siguiente bloque"}
-                            </strong>
-                            .
-                          </Form.Text>
-                          <OverlayTrigger
-                            placement="top"
-                            overlay={
-                              <Tooltip id="dur60-tip">
-                                Mostramos solo los horarios donde también está
-                                libre el siguiente bloque de 30’.
-                              </Tooltip>
-                            }
-                          >
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              className="ms-2 text-decoration-underline"
-                              style={{ cursor: "help" }}
-                            >
-                              ¿Por qué?
-                            </span>
-                          </OverlayTrigger>
-                        </div>
-                      )}
+                  {formErrors.hour && (
+                    <span className={styles.errorText}>{formErrors.hour}</span>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
 
-                      {formErrors.hour && (
-                        <Form.Text className="text-danger">
-                          {formErrors.hour}
-                        </Form.Text>
-                      )}
-                    </Form.Group>
-                  </Col>
-                </>
-              )}
-            </Row>
+          <button type="submit" className={styles.submitButton}>
+            Reservar cancha
+          </button>
+        </form>
+      </section>
 
-            <Button type="submit" variant="success" className="mt-4 w-100">
-              Reservar cancha
-            </Button>
-          </fieldset>
-        </Form>
-      </Container>
-
-      <Container className="mt-5">
-        <h3>📋 Próximas Reservas</h3>
+      {/* Future Reservations */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>📋 Próximas Reservas</h2>
         {myReservations.filter((r) => isFutureReservation(r.date, r.hour))
           .length === 0 ? (
-          <p>No tenés reservas próximas.</p>
+          <p className={styles.emptyState}>No tenés reservas próximas.</p>
         ) : (
-          <ListGroup className="mb-4">
+          <div className={styles.reservationsList}>
             {myReservations
               .filter((r) => isFutureReservation(r.date, r.hour))
               .map((r) => (
-                <ListGroup.Item
-                  key={r._id}
-                  className="d-flex justify-content-between align-items-center"
-                >
-                  <span>
-                    <strong>{r.field?.name}</strong> — {r.date} a las {r.hour}
-                  </span>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
+                <div key={r._id} className={styles.reservationItem}>
+                  <div className={styles.reservationInfo}>
+                    <div className={styles.reservationField}>
+                      {r.field?.name}
+                    </div>
+                    <div className={styles.reservationDetails}>
+                      {r.date} a las {r.hour}
+                    </div>
+                  </div>
+                  <button
+                    className={styles.cancelButton}
                     onClick={() => handleCancel(r._id)}
                   >
                     Cancelar
-                  </Button>
-                </ListGroup.Item>
+                  </button>
+                </div>
               ))}
-          </ListGroup>
+          </div>
         )}
-      </Container>
+      </section>
 
-      <Container className="mt-5">
-        <h3>🕓 Reservas Pasadas</h3>
+      {/* Past Reservations */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>🕓 Reservas Pasadas</h2>
         {myReservations.filter((r) => !isFutureReservation(r.date, r.hour))
           .length === 0 ? (
-          <p>No hay reservas anteriores.</p>
+          <p className={styles.emptyState}>No hay reservas anteriores.</p>
         ) : (
-          <ListGroup>
+          <div className={styles.reservationsList}>
             {myReservations
               .filter((r) => !isFutureReservation(r.date, r.hour))
               .map((r) => (
-                <ListGroup.Item key={r._id}>
-                  <strong>{r.field?.name}</strong> — {r.date} a las {r.hour}
-                </ListGroup.Item>
+                <div key={r._id} className={styles.pastReservationItem}>
+                  <div className={styles.pastReservationField}>
+                    {r.field?.name}
+                  </div>
+                  <div className={styles.reservationDetails}>
+                    {r.date} a las {r.hour}
+                  </div>
+                </div>
               ))}
-          </ListGroup>
+          </div>
         )}
-      </Container>
-    </Container>
+      </section>
+    </main>
   );
 };
 

@@ -4,10 +4,10 @@ import { getFields } from "../services/fieldService";
 import ProductCard from "./Producto/ProductCard";
 import FieldCard from "./Field/FieldCard";
 import Ad from "../components/Ad";
-import { Container, Row, Col } from "react-bootstrap";
 import HeroSection from "../components/HeroSection";
 import { useCart } from "../context/CartContext";
 import { useNavigate } from "react-router-dom";
+import styles from "./Home.module.css"; // CSS Module import
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -32,22 +32,20 @@ const Home = () => {
   }, []);
 
   return (
-    <Container className="py-4">
+    <div className={styles.homePage}>
       <HeroSection />
-      <main>
-        <h2>🏟️ Bienvenido a FurbitAll</h2>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+      
+      <main className={styles.mainContent}>
+        <div className={styles.container}>
+          <h2 className={styles.welcomeTitle}>🏟️ Bienvenido a FurbitAll</h2>
+          {error && <div className={styles.errorMessage}>{error}</div>}
 
-        <section
-          id="productos"
-          aria-labelledby="productos-heading"
-          className="mt-4"
-        >
-          <h3 className="mt-4">🛒 Productos</h3>
-          <Row xs={1} sm={2} md={3} lg={4} className="g-4 mb-5">
-            {products.map((p) => (
-              <Col key={p._id}>
+          <section className={styles.productsSection} id="productos">
+            <h3 className={styles.sectionTitle}>🛒 Productos</h3>
+            <div className={styles.grid}>
+              {products.map((p) => (
                 <ProductCard
+                  key={p._id}
                   name={p.name}
                   price={p.price}
                   image={p.image}
@@ -58,27 +56,28 @@ const Home = () => {
                     navigate("/cart");
                   }}
                 />
-              </Col>
-            ))}
-          </Row>
-          <Ad />
-        </section>
+              ))}
+            </div>
+            <Ad />
+          </section>
 
-        <h3 className="mt-5">⚽ Canchas disponibles</h3>
-        <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-          {fields.map((f) => (
-            <Col key={f._id}>
-              <FieldCard
-                _id={f._id}
-                name={f.name}
-                location={f.location}
-                image={f.image}
-              />
-            </Col>
-          ))}
-        </Row>
+          <section className={styles.fieldsSection}>
+            <h3 className={styles.sectionTitle}>⚽ Canchas disponibles</h3>
+            <div className={styles.grid}>
+              {fields.map((f) => (
+                <FieldCard
+                  key={f._id}
+                  _id={f._id}
+                  name={f.name}
+                  location={f.location}
+                  image={f.image}
+                />
+              ))}
+            </div>
+          </section>
+        </div>
       </main>
-    </Container>
+    </div>
   );
 };
 
